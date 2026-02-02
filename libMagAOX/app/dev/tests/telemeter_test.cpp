@@ -77,10 +77,8 @@ TEST_CASE( "Test telemeter Configuration", "[dev::telemeter]" )
         REQUIRE( pdt.m_maxInterval == 25 );
     }
 
-     #ifdef XWCTEST_DOX_REF
-    MagAOX::app::dev::telemeter::setupConfig();
-    MagAOX::app::dev::telemeter::loadConfig();
-    #endif
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::setupConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::loadConfig());
 }
 
 /// Test telemeter app logic
@@ -155,13 +153,11 @@ TEST_CASE( "Test telemeter app logic", "[dev::telemeter]" )
         REQUIRE( rv == 0 );
     }
 
-    #ifdef XWCTEST_DOX_REF
-    MagAOX::app::dev::telemeter::setupConfig();
-    MagAOX::app::dev::telemeter::loadConfig();
-    MagAOX::app::dev::telemeter::appStartup();
-    MagAOX::app::dev::telemeter::appLogic();
-    MagAOX::app::dev::telemeter::appShutdown();
-    #endif
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::setupConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::loadConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::appStartup());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::appLogic());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::appShutdown());
 }
 
 /// Test telemeter telem-logger fails to start
@@ -191,9 +187,7 @@ TEST_CASE( "Test telemeter telem-logger fails to start", "[dev::telemeter]" )
     rv = pdt.appStartup();
     REQUIRE( rv == -1 );
 
-    #ifdef XWCTEST_DOX_REF
-    MagAOX::app::dev::telemeter::setupConfig();
-    MagAOX::app::dev::telemeter::loadConfig();
-    MagAOX::app::dev::telemeter::appStartup();
-    #endif
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::setupConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::loadConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::telemeter::appStartup());
 }

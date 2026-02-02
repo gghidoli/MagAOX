@@ -21,6 +21,8 @@ namespace XWCTEST_NAMESPACE
 {
 #endif
 
+#include "tests/testMacros.hpp"
+
 
 /// A device base class which saves telemetry.
 /**
@@ -261,11 +263,8 @@ int telemeter<derivedT>::appStartup()
 
     m_tel.logThreadStart();
 
-    // clang-format off
-    #ifdef XWCTEST_TELEMETER_LOGSTART
-    m_tel.logShutdown(true); // LCOV_EXCL_LINE
-    sleep(2); // LCOV_EXCL_LINE
-    #endif // clang-format on
+    XWCTEST_IF_TELEMETER_LOGSTART(m_tel.logShutdown(true));
+    XWCTEST_IF_TELEMETER_LOGSTART(sleep(2));
 
     // Give up to 2 secs to make sure log thread has time to get started and try to open a file.
     int w = 0;
