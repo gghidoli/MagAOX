@@ -66,6 +66,9 @@ struct outletControllerTest : public MagAOXApp<false>, dev::outletController<out
 
    int turnOutletOn( int outletNum )
    {
+      if (outletNum < 0) {
+         return -1;
+      }
       m_outletStates[outletNum] = 2;
       mx::sys::nanoSleep(1);
       m_timestamps[outletNum] = mx::sys::get_curr_time();
@@ -75,6 +78,9 @@ struct outletControllerTest : public MagAOXApp<false>, dev::outletController<out
 
    int turnOutletOff( int outletNum )
    {
+      if (outletNum < 0) {
+         return -1;
+      }
       m_outletStates[outletNum] = 0;
       mx::sys::nanoSleep(1);
       m_timestamps[outletNum] = mx::sys::get_curr_time();
@@ -652,6 +658,104 @@ SCENARIO( "outletController Configuration", "[outletController]" )
          REQUIRE( offDelays[0] == 0 );
          REQUIRE( offDelays[1] == 108 );
       }
+   }
+   GIVEN("a config file with errors with 2 channels for 4 outlets")
+   {
+      WHEN("using outlet keyword, start less than 0")
+      {
+         mx::app::writeConfigFile( "/tmp/outletController_test.conf", {"channel1",     "channel2" },
+                                                        {"outlet",       "outlet"   },
+                                                        {"-1,1",           "6,3"   } );
+
+         mx::app::appConfigurator config;
+         config.readConfig("/tmp/outletController_test.conf");
+
+         outletControllerTest pdt;
+         int rv;
+         rv = pdt.setupConfig(config);
+         REQUIRE( rv == 0);
+
+         rv = pdt.loadConfig(config);
+         REQUIRE( rv == -1);
+
+      }
+
+      WHEN("using outlet and onOrder keywords, mismatch sizes")
+      {
+         mx::app::writeConfigFile( "/tmp/outletController_test.conf", {"channel1", "channel1", "channel1", "channel1", "channel1", "channel2" },
+                                                        {"outlets",  "onOrder",  "offOrder", "onDelays", "offDelays",  "outlets"},
+                                                        {"0,1",      "0,1,2",    "0,1",      "0,100",    "0,120",      "1,2", } );
+
+         mx::app::appConfigurator config;
+         config.readConfig("/tmp/outletController_test.conf");
+
+         outletControllerTest pdt;
+         int rv;
+         rv = pdt.setupConfig(config);
+         REQUIRE( rv == 0);
+
+         rv = pdt.loadConfig(config);
+         REQUIRE( rv == -1);
+
+      }
+
+      WHEN("using outlet and offOrder mismatch sizes")
+      {
+         mx::app::writeConfigFile( "/tmp/outletController_test.conf", {"channel1", "channel1", "channel1", "channel1", "channel1", "channel2" },
+                                                        {"outlets",  "onOrder",  "offOrder", "onDelays", "offDelays",  "outlets" },
+                                                        {"0,1",      "0,1",    "0,1,2",      "0,100",    "0,120",      "1,2" } );
+
+         mx::app::appConfigurator config;
+         config.readConfig("/tmp/outletController_test.conf");
+
+         outletControllerTest pdt;
+         int rv;
+         rv = pdt.setupConfig(config);
+         REQUIRE( rv == 0);
+
+         rv = pdt.loadConfig(config);
+         REQUIRE( rv == -1);
+
+      }
+
+      WHEN("using outlet and onDelay mismatch sizes")
+      {
+         mx::app::writeConfigFile( "/tmp/outletController_test.conf", {"channel1", "channel1", "channel1", "channel1", "channel1", "channel2", "channel2" },
+                                                        {"outlets",  "onOrder",  "offOrder", "onDelays", "offDelays",  "outlets", "onDelays"},
+                                                        {"0,1",      "0,1",    "0,1",      "0,100",    "0,120",      "1,2",      "0,100,200"} );
+
+         mx::app::appConfigurator config;
+         config.readConfig("/tmp/outletController_test.conf");
+
+         outletControllerTest pdt;
+         int rv;
+         rv = pdt.setupConfig(config);
+         REQUIRE( rv == 0);
+
+         rv = pdt.loadConfig(config);
+         REQUIRE( rv == -1);
+
+      }
+
+      WHEN("using outlet and offDelays, mismatch sizes")
+      {
+         mx::app::writeConfigFile( "/tmp/outletController_test.conf", {"channel1", "channel1", "channel1", "channel1", "channel1", "channel2"},
+                                                        {"outlets",  "onOrder",  "offOrder", "onDelays", "offDelays",  "outlets"},
+                                                        {"0,1",      "0,1",    "0,1",      "0,100",    "0,120,200",      "1,2"} );
+
+         mx::app::appConfigurator config;
+         config.readConfig("/tmp/outletController_test.conf");
+
+         outletControllerTest pdt;
+         int rv;
+         rv = pdt.setupConfig(config);
+         REQUIRE( rv == 0);
+
+         rv = pdt.loadConfig(config);
+         REQUIRE( rv == -1);
+
+      }
+   
    }
 }
 
@@ -1266,6 +1370,61 @@ SCENARIO( "outletController Operation", "[outletController]" )
          //Verify channel state
          REQUIRE( pdt.channelState("channel1") == 0 );
          REQUIRE( pdt.channelState("channel2") == 0 );
+      }
+      WHEN("operating a single channel with bad outlet numbers on first channel")
+      {
+         pdt.m_channels["channel1"].m_outlets[0] = -1;
+         //Turn on channel1
+         int rv = pdt.turnChannelOn("channel1");
+
+         //verify error returned
+         REQUIRE( rv == -1 );
+
+         // actually turn it on now so we can trigger error turning it off
+         pdt.m_channels["channel1"].m_outlets[0] = 0;
+         rv = pdt.turnChannelOn("channel1");
+         REQUIRE( rv == 0 );
+
+         // turn on when already on
+         rv = pdt.turnChannelOn("channel1");
+         REQUIRE( rv == 0 );
+
+         pdt.m_channels["channel1"].m_outlets[0] = -1;
+
+         //Turn off channel1 - produces error 
+         rv = pdt.turnChannelOff("channel1");
+
+         //verify error returned
+         REQUIRE( rv == -1);
+
+         // actually turn it off now 
+         pdt.m_channels["channel1"].m_outlets[0] = 0;
+         rv = pdt.turnChannelOff("channel1");
+         REQUIRE( rv == 0 );
+
+         // turn off when already off
+         rv = pdt.turnChannelOff("channel1");
+         REQUIRE( rv == 0 );
+
+      }
+      WHEN("operating a single channel with bad outlet numbers on second channel")
+      {
+         int rv = pdt.updateOutletStates();
+         REQUIRE(rv == 0);
+
+         pdt.m_channels["channel2"].m_outlets[1] = -1;
+         //Turn on channel1
+         rv = pdt.turnChannelOn("channel2");
+
+         //verify error returned
+         REQUIRE( rv == -1);
+
+         //Turn off channel1
+         rv = pdt.turnChannelOff("channel2");
+
+         //verify error returned
+         REQUIRE( rv == -1);
+
       }
    }
    GIVEN("a config file with 2 channels for 4 outlets, onOrder reversed")

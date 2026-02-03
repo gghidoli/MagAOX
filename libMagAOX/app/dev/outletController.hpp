@@ -374,7 +374,6 @@ int outletController<derivedT>::loadConfig( mx::app::appConfigurator & config )
       //Subtract one if the device numbers from 1.
       for(size_t k=0;k<outlets.size(); ++k)
       {
-         ///\todo test this error
          if( (int) outlets[k] - m_firstOne < 0 || (int) outlets[k] - m_firstOne > (int) m_outletStates.size())
          {
             return derivedT::template log<software_error,-1>( std::format("Outlet {} in Channel ""{} is not valid", outlets[k], chSections[n]), logPrio::LOG_ERROR);
