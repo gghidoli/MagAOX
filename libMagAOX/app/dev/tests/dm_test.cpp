@@ -4,7 +4,7 @@
 #include <mx/sys/timeUtils.hpp>
 
 #include "dm_test.hpp"
-
+#include "testMacros.hpp"
 
 /** \defgroup dm_tests libXWC::app::dev::dm Unit Tests
  * \ingroup app_dev_unit_tests
@@ -68,11 +68,103 @@ TEST_CASE( "Test dm Configuration", "[dev::dm]" )
         REQUIRE( pdt.calibPath() == "/tmp/dmtest_calibs2/dmtest2" );
     }
 
-#ifdef XWCTEST_DOX_REF
-    MagAOX::app::dev::dm::setupConfig();
-    MagAOX::app::dev::dm::loadConfig();
-    MagAOX::app::dev::dm::calibPath();
-#endif
+    SECTION( "a config file with non-empty [flatDefault, testDefault]" )
+    {
+
+        std::vector<std::string> s, k, v;
+
+        s.insert(s.end(), {"dm", "dm"} );
+        k.insert(k.end(), {"flatDefault", "testDefault"} );
+        v.insert(v.end(), {"default", "default"} );
+
+        mx::app::writeConfigFile( "/tmp/dm_test.conf", s, k, v );
+
+        mx::app::appConfigurator config;
+
+        dm_tests::dmTest pdt( "xx", false );
+
+        int rv;
+        rv = pdt.setupConfig( config );
+        REQUIRE( rv == 0 );
+
+        config.readConfig( "/tmp/dm_test.conf" );
+
+        rv = pdt.loadConfig( config );
+        REQUIRE( rv == 0 );
+
+        REQUIRE( pdt.flatDefault() == "default" );
+        REQUIRE( pdt.testDefault() == "default" );
+
+    }
+
+    SECTION( "a config file with a non-empty bad [actMaskPath, width, height]" )
+    {
+        std::vector<std::string> s, k, v;
+
+        s.push_back( "dm" );
+        k.push_back( "width" );
+        v.push_back( "50" );
+
+        s.push_back( "dm" );
+        k.push_back( "height" );
+        v.push_back( "50" );
+
+        s.push_back( "dm" );
+        k.push_back( "actMaskPath" );
+        v.push_back( "/tmp/dmtest_actMask2/dmtest2" ); // throws exception
+
+        mx::app::writeConfigFile( "/tmp/dm_test.conf", s, k, v );
+
+        mx::app::appConfigurator config;
+
+        dm_tests::dmTest pdt( "xx", false );
+
+        int rv;
+        rv = pdt.setupConfig( config );
+        REQUIRE( rv == 0 );
+
+        config.readConfig( "/tmp/dm_test.conf" );
+
+        rv = pdt.loadConfig( config );
+        REQUIRE( rv == -1 );
+    }
+
+    SECTION( "a config file with a non-empty [actMaskPath, width, height] and bad dimmensions" )
+    {
+        std::vector<std::string> s, k, v;
+
+        s.push_back( "dm" );
+        k.push_back( "width" );
+        v.push_back( "4294967295" ); // throws exception
+
+        s.push_back( "dm" );
+        k.push_back( "height" );
+        v.push_back( "4294967295" );
+
+        s.push_back( "dm" );
+        k.push_back( "actMaskPath" );
+        v.push_back( "/tmp/dmtest_actMask2/dmtest2" );
+
+        mx::app::writeConfigFile( "/tmp/dm_test.conf", s, k, v );
+
+        mx::app::appConfigurator config;
+
+        dm_tests::dmTest pdt( "xx", false );
+
+        int rv;
+        rv = pdt.setupConfig( config );
+        REQUIRE( rv == 0 );
+
+        config.readConfig( "/tmp/dm_test.conf" );
+
+        rv = pdt.loadConfig( config );
+        REQUIRE( rv == -1 );
+    }
+
+
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::setupConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::loadConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::calibPath());
 }
 
 /// Test dmcomb detection, configuration, and manipulation
@@ -316,13 +408,11 @@ TEST_CASE( "Test dm app logic", "[dev::dm]" )
         REQUIRE( rv == 0 );
     }
 
-    #ifdef XWCTEST_DOX_REF
-    MagAOX::app::dev::dm::setupConfig();
-    MagAOX::app::dev::dm::loadConfig();
-    MagAOX::app::dev::dm::appStartup();
-    MagAOX::app::dev::dm::appLogic();
-    MagAOX::app::dev::dm::appShutdown();
-    #endif
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::setupConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::loadConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::appStartup());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::appLogic());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::appShutdown());
 }
 
 /// Test dm telem-logger fails to start
@@ -352,11 +442,9 @@ TEST_CASE( "Test dm telem-logger fails to start", "[dev::dm]" )
     rv = pdt.appStartup();
     REQUIRE( rv == -1 );
 
-    #ifdef XWCTEST_DOX_REF
-    MagAOX::app::dev::dm::setupConfig();
-    MagAOX::app::dev::dm::loadConfig();
-    MagAOX::app::dev::dm::appStartup();
-    #endif
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::setupConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::loadConfig());
+    XWCTEST_IF_DOX_REF(MagAOX::app::dev::dm::appStartup());
 }
 
 #endif
